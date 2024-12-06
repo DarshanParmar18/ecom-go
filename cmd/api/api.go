@@ -5,25 +5,31 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/darshanparmar18/ecom/services/user"
 	"github.com/gorilla/mux"
 )
 
-type APIServer struct {
-	addr string
-	db   *sql.DB
+type APIServer struct{
+	listenAddr string
+	db *sql.DB
 }
 
-func NewAPIServer(addr string, db *sql.DB) *APIServer {
+func NewAPIServer(listenAddr string, db *sql.DB) *APIServer{
 	return &APIServer{
-		addr: addr,
+		listenAddr: listenAddr,
 		db: db,
 	}
 }
 
-func (s *APIServer) Run() error {
+func (s *APIServer) Run() {
 	router := mux.NewRouter()
-	subRouter := router.PathPrefix("/api/v1").Subrouter()
 
-	log.Println("listening on", s.addr)
-	return http.ListenAndServe(s.addr, router);
-} 
+	userStore := user.NewStore(s.db)
+	userHandler := user.NewHandler(userStore)	
+	userHandler.RegisterRoutes(router)
+
+	log.Println("listening on :",s.listenAddr)
+	http.ListenAndServe(s.listenAddr, router) 
+}
+
+
